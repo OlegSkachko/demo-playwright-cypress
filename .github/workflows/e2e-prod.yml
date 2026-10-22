@@ -1,0 +1,70 @@
+# Запуск e2e-тестов на проде «по кнопке»: GitHub → Actions → «E2E на проде» → Run workflow
+name: E2E на проде
+
+on:
+  workflow_dispatch:
+    inputs:
+      framework:
+        description: Какой фреймворк запускать
+        type: choice
+        options: [both, playwright, cypress]
+        default: both
+      base_url:
+        description: URL стенда (пусто — берётся из переменной репозитория PROD_URL)
+        required: false
+  # Раскомментируйте для ежедневного прогона в 07:00 МСК
+  # schedule:
+  #   - cron: '0 4 * * *'
+
+env:
+  BASE_URL: ${{ inputs.base_url || vars.PROD_URL }}
+  TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+  TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+
+defaults:
+  run:
+    working-directory: e2e
+
+jobs:
+  playwright:
+    if: ${{ inputs.framework != 'cypress' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: e2e/reports/playwright
+          retention-days: 14
+
+  cypress:
+    if: ${{ inputs.framework != 'playwright' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - run: npm ci
+      - run: npx cypress run --browser chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-report
+          path: |
+            e2e/reports/cypress
+            e2e/test-results/cypress
+          retention-days: 14

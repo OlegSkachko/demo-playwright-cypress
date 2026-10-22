@@ -1,0 +1,23 @@
+{
+  "name": "lumen-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "pw": "playwright test",
+    "pw:ui": "playwright test --ui",
+    "pw:ui:web": "playwright test --ui-port=9323",
+    "pw:headed": "playwright test --headed",
+    "pw:report": "playwright show-report reports/playwright",
+    "cy": "cypress run",
+    "cy:ui": "cypress open --e2e",
+    "cy:ui:web": "cypress open --e2e --browser chrome",
+    "cy:headed": "cypress run --headed --browser chrome",
+    "cy:report": "open reports/cypress/index.html",
+    "test:all": "npm run pw; npm run cy"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.49.1",
+    "cypress": "16.2.0",
+    "cypress-mochawesome-reporter": "3.8.2"
+  }
+}
